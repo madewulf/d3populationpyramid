@@ -1,0 +1,13 @@
+.chart rect.male{
+    fill: steelblue;
+}
+
+.chart rect.female{
+    fill: pink;
+}
+
+.chart text {
+    fill: white;
+    font: 10px sans-serif;
+    text-anchor: end;
+}
