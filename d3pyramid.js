@@ -1,68 +1,93 @@
-d3.json("belgium.json", function(error, json) {
+d3.json("belgium2.json", function (error, json) {
   if (error) return console.warn(error);
   data = json;
-  pyramid(data[2016]);
-
+  pyramid(data[0].d);
 });
 
-function pyramid(data)
-{
-  var originalData = data;
-  var width = 420,
+function pyramid(data) {
+  var width = window.innerWidth,
     barHeight = 20;
 
-  var arr = [];
-  var femaleArr = [];
-  for (var key in data.male)
-  {
-    arr.push(data.male[key]);
-    femaleArr.push(data.female[key]);
+  var maleArr = data.m;
+  var femaleArr = data.f;
+
+  data = maleArr;
+  var pointCount = data.length;
+
+  var sum = 0;
+  for (var i = 0; i < pointCount; i++) {
+    sum += maleArr[i] + femaleArr[i];
   }
 
-  data = arr;
-
-  var x = d3.scaleLinear()
-    .domain([0, 1])
-    .range([0, width]);
-
+  /*Bars */
+  var femaleX = d3.scaleLinear()
+    .domain([0.1, 0])
+    .range([0, width / 2]);
+  var maleX = d3.scaleLinear()
+    .domain([0, 0.1])
+    .range([0, width / 2]);
+  var chartHeight = barHeight * (pointCount + 1);
   var chart = d3.select(".chart")
     .attr("width", width)
-    .attr("height", barHeight * data.length);
+    .attr("height", barHeight * (pointCount + 1));
 
   var bar = chart.selectAll("g")
     .data(data)
     .enter().append("g")
-    .attr("transform", function(d, i) { return "translate(0," + i * barHeight + ")"; });
+    .attr("transform", function (d, i) {
+      return "translate(0," + (pointCount - 1 - i) * barHeight + ")";
+    });
 
   bar.append("rect")
-    .attr("width", function(d,i) {
-
-      var percentage = d/originalData.both[i];
-
-      return x(percentage/2);
+    .attr("width", function (d, i) {
+      var percentage = d / (sum);
+      return maleX(percentage);
     })
     .attr("height", barHeight - 1)
-    .attr("transform", "translate("+ width/2 +  ",0)")
-    .attr("class","male");
+    .attr("transform", "translate(" + width / 2 + ",0)")
+    .attr("class", "male");
 
   bar.append("rect")
-    .attr("width", function(d,i) {
-      var percentage = (originalData.both[i] -femaleArr[i])/originalData.both[i];
-      return x(percentage/2);
+    .attr("width", function (d, i) {
+      var percentage = (femaleArr[i]) / sum;
+      return femaleX(0.1 - percentage);
     })
     .attr("height", barHeight - 1)
-    .attr("transform", function(d, i) {
-      var percentage = d/originalData.both[i];
-      var dx = x(0.5)-x(percentage/2);
-      return "translate("+ dx +  ",0)"; })
-    .attr("class","female");
+    .attr("transform", function (d, i) {
+      var percentage = femaleArr[i] / sum;
+      return "translate(" + femaleX(percentage) + ",0)";
+    })
+    .attr("class", "female");
 
-  bar.append("text")
-    .attr("x", function(d, i) {
-      var percentage = d/originalData.both[i];
-      return x(percentage/2) - 3 + width/2;
-     })
-    .attr("y", barHeight / 2)
-    .attr("dy", ".35em")
-    .text(function(d) { return d; });
+
+  /*Line*/
+
+  var generator = d3.line()
+    .x(function (d, i) {
+      console.log(d, i);
+      var percentage = (femaleArr[i]) / sum;
+      return maleX(0.1 - percentage);
+    })
+    .y(function (d, i) { return chartHeight - (i+1) * barHeight - barHeight/2 });
+
+  chart.append('path')
+    .data([femaleArr])
+    .attr("d", generator)
+    .attr("class", "popPath");
+
+  /*Axes */
+  var maleXAxis = d3.axisBottom().ticks(4)
+    .scale(maleX);
+  var femaleXAxis = d3.axisBottom().ticks(4)
+    .scale(femaleX);
+  var bottomY = (pointCount ) * barHeight;
+  chart.append("g").attr("transform", "translate(" + width / 2 + "," + bottomY + ")").call(maleXAxis);
+  chart.append("g").attr("transform", "translate(0," + bottomY + ")").call(femaleXAxis);
+
+  var yScale =  d3.scaleLinear()
+    .domain([100, 0])
+    .range([0, barHeight * (pointCount)]);
+  var yAxis  = d3.axisRight().ticks(20).tickPadding(15)
+    .scale(yScale);
+  chart.append("g").call(yAxis);
 }

@@ -2,6 +2,10 @@
     fill: steelblue;
 }
 
+body
+{
+    background-color:#AAAAAA;
+}
 .chart rect.female{
     fill: pink;
 }
@@ -10,4 +14,11 @@
     fill: white;
     font: 10px sans-serif;
     text-anchor: end;
+}
+
+.popPath
+{
+    fill: none;
+    stroke: white;
+    stroke-width: 2px;
 }
